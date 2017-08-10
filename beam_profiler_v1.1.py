@@ -269,8 +269,10 @@ class main(QWidget):
 
             self.wxplot.set_ydata(self.waistListX)
             self.wyplot.set_ydata(self.waistListY)
+
             self.wax.relim()
             self.wax.autoscale_view(True, True, True)
+
             self.intensityFig.tight_layout()
 
             self.canvas.draw()
@@ -279,14 +281,25 @@ class main(QWidget):
             self.canvas.flush_events()
             self.intensityCanvas.flush_events()
 
+    def gaussian(self,x, a, x0, b, wx):
+        return a * np.exp(-2((x - x0) / wx) ** 2)+ b
+
     def calc_waists(self):
         try:
             xdata = np.sum(self.imdata, axis=0)  # x
             ydata = np.sum(self.imdata, axis=1)  # x
-            wx = curve_fit(lambda x, a, x0, wx: a * np.exp(-((x - x0) / wx) ** 2), np.arange(len(xdata)), xdata,
-                           p0=(xdata.max(), 600, 600))[0][-1]
-            wy = curve_fit(lambda y, a, y0, wy: a * np.exp(-((y - y0) / wy) ** 2), np.arange(len(ydata)), ydata,
-                           p0=(ydata.max(), 600, 600))[0][-1]
+
+            p0x = (xdata.max(), 600, 0, 600)
+            p0y = (ydata.max(), 600, 0, 600)
+
+            px, covx = curve_fit(self.gaussian, np.arange(len(xdata)), xdata,
+                           p0=p0x)
+            py, covy = curve_fit(self.gaussian, np.arange(len(ydata)), ydata,
+                           p0=p0y)
+
+            wx = px[-1]
+            wy = py[-1]
+
 
             pixel_size = 5.2e-3  # mm
 
