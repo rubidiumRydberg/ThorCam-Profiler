@@ -144,6 +144,7 @@ class main(QWidget):
         self.cam = cameraAPI()
 
         self.activateExtra = 1
+        self.continuous = 0
 
         self.waistListX = np.zeros(20)
         self.waistListY = np.zeros(20)
@@ -164,8 +165,11 @@ class main(QWidget):
         Button_1 = QPushButton('Calc waist', self)
         Button_1.clicked.connect(self.calc_waists)
 
+        self.buttonContinous = QPushButton('Calc waist', self)
+        self.buttonContinous.clicked.connect(self.calc_waists)
+
         ButtonShowHide = QPushButton('Toggle Graphs', self)
-        ButtonShowHide.clicked.connect(self.showHide)
+        ButtonShowHide.clicked.connect(self.toggleContinuousMode)
 
         self.Exposure_slider = QSlider(orientation=Qt.Horizontal, parent=self)
         self.Exposure_slider.setMinimum(1)
@@ -183,6 +187,7 @@ class main(QWidget):
         layout.addWidget(ButtonShowHide, 4, 0)
         layout.addWidget(self.waistTextBox, 2, 1)
         layout.addWidget(self.intensityCanvas, 3, 1)
+        layout.addWidget(self.buttonContinous,4,1)
         # layout.addWidget(self.button)
 
         layout.addWidget
@@ -196,13 +201,19 @@ class main(QWidget):
         self.run_stream = True
         self.camera_stream()
 
+    def toggleContinuousMode(self):
+        self.continuous = (self.continuous + 1) % 2
+        return
+
     def showHide(self):
         if self.activateExtra == 1:
             self.intensityCanvas.hide()
             self.waistTextBox.hide()
+            self.buttonContinous.hide()
         else:
             self.intensityCanvas.show()
             self.waistTextBox.show()
+            self.buttonContinous.show()
         self.activateExtra = (self.activateExtra + 1) % 2
 
     def On_exposure_change(self):
@@ -269,6 +280,10 @@ class main(QWidget):
 
             self.wxplot.set_ydata(self.waistListX)
             self.wyplot.set_ydata(self.waistListY)
+
+
+            if self.continuous ==1:
+                self.calc_waists()
 
             self.wax.relim()
             self.wax.autoscale_view(True, True, True)
