@@ -165,11 +165,11 @@ class main(QWidget):
         Button_1 = QPushButton('Calc waist', self)
         Button_1.clicked.connect(self.calc_waists)
 
-        self.buttonContinous = QPushButton('Calc waist', self)
-        self.buttonContinous.clicked.connect(self.calc_waists)
+        self.buttonContinous = QPushButton('Toggle Continuous Mode', self)
+        self.buttonContinous.clicked.connect(self.toggleContinuousMode)
 
         ButtonShowHide = QPushButton('Toggle Graphs', self)
-        ButtonShowHide.clicked.connect(self.toggleContinuousMode)
+        ButtonShowHide.clicked.connect(self.showHide)
 
         self.Exposure_slider = QSlider(orientation=Qt.Horizontal, parent=self)
         self.Exposure_slider.setMinimum(1)
@@ -297,7 +297,7 @@ class main(QWidget):
             self.intensityCanvas.flush_events()
 
     def gaussian(self,x, a, x0, b, wx):
-        return a * np.exp(-2((x - x0) / wx) ** 2)+ b
+        return a * np.exp(-2*((x - x0) / wx) ** 2)+ b
 
     def calc_waists(self):
         try:
