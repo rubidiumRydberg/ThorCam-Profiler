@@ -138,200 +138,223 @@ class cameraAPI():
 
 
 class main(QWidget):
-    def __init__(self):
-        QWidget.__init__(self)
+	def __init__(self):
+		QWidget.__init__(self)
 
-        self.cam = cameraAPI()
+		self.cam = cameraAPI()
 
-        self.activateExtra = 1
-        self.continuous = 0
+		self.activateExtra = 1
+		self.continuous = 0
 
-        self.waistListX = np.zeros(20)
-        self.waistListY = np.zeros(20)
+		self.waistListX = np.zeros(20)
+		self.waistListY = np.zeros(20)
 
-        # self.setGeometry(300, 300, 300, 220)
-        self.setWindowTitle('Camera Software')
-        self.setWindowIcon(QIcon('web.png'))
+		# self.setGeometry(300, 300, 300, 220)
+		self.setWindowTitle('Camera Software')
+		self.setWindowIcon(QIcon('web.png'))
 
-        # Add Matplotlib Canvas to plot ThorCam image to.
-        self.fig = plt.figure(figsize=(5, 5))
-        self.canvas = FigureCanvasQTAgg(self.fig)
-        # Add second canvas to print the histogram to.
-        self.intensityFig = plt.figure(figsize=(5, 2))
-        self.intensityCanvas = FigureCanvasQTAgg(self.intensityFig)
+		# Add Matplotlib Canvas to plot ThorCam image to.
+		self.fig = plt.figure(figsize=(5, 5))
+		self.canvas = FigureCanvasQTAgg(self.fig)
+		# Add second canvas to print the histogram to.
+		self.intensityFig = plt.figure(figsize=(5, 2))
+		self.intensityCanvas = FigureCanvasQTAgg(self.intensityFig)
 
-        self.waistTextBox = QLineEdit(self)
+		self.waistTextBox = QLineEdit(self)
 
-        Button_1 = QPushButton('Calc waist', self)
-        Button_1.clicked.connect(self.calc_waists)
+		Button_1 = QPushButton('Calc waist', self)
+		Button_1.clicked.connect(self.calc_waists)
 
-        self.buttonContinous = QPushButton('Toggle Continuous Mode', self)
-        self.buttonContinous.clicked.connect(self.toggleContinuousMode)
+		self.buttonContinous = QPushButton('Toggle Continuous Mode', self)
+		self.buttonContinous.clicked.connect(self.toggleContinuousMode)
 
-        ButtonShowHide = QPushButton('Toggle Graphs', self)
-        ButtonShowHide.clicked.connect(self.showHide)
+		ButtonShowHide = QPushButton('Toggle Graphs', self)
+		ButtonShowHide.clicked.connect(self.showHide)
 
-        self.Exposure_slider = QSlider(orientation=Qt.Horizontal, parent=self)
-        self.Exposure_slider.setMinimum(1)
-        self.Exposure_slider.setMaximum(100)
-        self.Exposure_slider.setValue(50)
-        self.On_exposure_change()
-        self.Exposure_slider.valueChanged.connect(self.On_exposure_change)
+		self.Exposure_slider = QSlider(orientation=Qt.Horizontal, parent=self)
+		self.Exposure_slider.setMinimum(1)
+		self.Exposure_slider.setMaximum(100)
+		self.Exposure_slider.setValue(50)
+		self.On_exposure_change()
+		self.Exposure_slider.valueChanged.connect(self.On_exposure_change)
 
-        # set the layout
-        layout = QGridLayout()
-        # layout.addWidget(self.toolbar)
-        layout.addWidget(Button_1, 1, 0)
-        layout.addWidget(self.Exposure_slider, 2, 0)
-        layout.addWidget(self.canvas, 3, 0)
-        layout.addWidget(ButtonShowHide, 4, 0)
-        layout.addWidget(self.waistTextBox, 2, 1)
-        layout.addWidget(self.intensityCanvas, 3, 1)
-        layout.addWidget(self.buttonContinous,4,1)
-        # layout.addWidget(self.button)
+		# set the layout
+		layout = QGridLayout()
+		# layout.addWidget(self.toolbar)
+		layout.addWidget(Button_1, 1, 0)
+		layout.addWidget(self.Exposure_slider, 2, 0)
+		layout.addWidget(self.canvas, 3, 0)
+		layout.addWidget(ButtonShowHide, 4, 0)
+		layout.addWidget(self.waistTextBox, 2, 1)
+		layout.addWidget(self.intensityCanvas, 3, 1)
+		layout.addWidget(self.buttonContinous,4,1)
+		# layout.addWidget(self.button)
 
-        layout.addWidget
+		layout.addWidget
 
-        self.showHide()
+		self.showHide()
 
-        self.setLayout(layout)
+		self.setLayout(layout)
 
-        self.show()
+		self.show()
 
-        self.run_stream = True
-        self.camera_stream()
+		self.run_stream = True
+		self.camera_stream()
 
-    def toggleContinuousMode(self):
-        self.continuous = (self.continuous + 1) % 2
-        return
+	def toggleContinuousMode(self):
+		self.continuous = (self.continuous + 1) % 2
+		return
 
-    def showHide(self):
-        if self.activateExtra == 1:
-            self.intensityCanvas.hide()
-            self.waistTextBox.hide()
-            self.buttonContinous.hide()
-        else:
-            self.intensityCanvas.show()
-            self.waistTextBox.show()
-            self.buttonContinous.show()
-        self.activateExtra = (self.activateExtra + 1) % 2
+	def showHide(self):
+		if self.activateExtra == 1:
+			self.intensityCanvas.hide()
+			self.waistTextBox.hide()
+			self.buttonContinous.hide()
+		else:
+			self.intensityCanvas.show()
+			self.waistTextBox.show()
+			self.buttonContinous.show()
+		self.activateExtra = (self.activateExtra + 1) % 2
 
-    def On_exposure_change(self):
-        new_exposure = 0.037 * 10 ** (self.Exposure_slider.value() / 23)
-        self.cam.update_exposure_time(new_exposure)
+	def On_exposure_change(self):
+		new_exposure = 0.037 * 10 ** (self.Exposure_slider.value() / 23)
+		self.cam.update_exposure_time(new_exposure)
 
-    def closeEvent(self, event):
-        self.run_stream = False
-        time.sleep(1)
-        event.accept()  # let the window close
+	def closeEvent(self, event):
+		self.run_stream = False
+		time.sleep(1)
+		event.accept()  # let the window close
 
-    def camera_stream(self):
-        t = threading.Timer(0, function=self.capture_image)
-        t.daemon = True
-        t.start()
+	def camera_stream(self):
+		t = threading.Timer(0, function=self.capture_image)
+		t.daemon = True
+		t.start()
 
-    def get1DIntensity(self, axis):
+	def get1DIntensity(self, axis):
 
-        maxIndex = np.argmax(self.imdata)
+		maxIndex = np.argmax(self.imdata)
 
-        maxXIndex, maxYIndex = np.unravel_index(maxIndex, self.imdata.shape)
+		maxXIndex, maxYIndex = np.unravel_index(maxIndex, self.imdata.shape)
 
-        if axis == 'v':
-            oneDIntensity = self.imdata[maxXIndex, :]
-        if axis == 'h':
-            oneDIntensity = self.imdata[:, maxYIndex]
+		if axis == 'v':
+			oneDIntensity = self.imdata[maxXIndex, :]
+		if axis == 'h':
+			oneDIntensity = self.imdata[:, maxYIndex]
 
-        return oneDIntensity, (maxXIndex, maxYIndex)
+		return oneDIntensity, (maxXIndex, maxYIndex)
 
-    def capture_image(self):
-        # Create the matplotlib axis to display the image data
-        self.ax = self.fig.add_subplot(111)
+	def capture_image(self):
+		# Create the matplotlib axis to display the image data
+		self.ax = self.fig.add_subplot(111)
 
-        from scipy import misc
-        self.imdata = self.cam.get_image()
+		from scipy import misc
+		#self.imdata = self.cam.get_image()
+		from scipy.misc import imread
+		self.imdata = imread('./gaussian.jpg')
 
-        self.image = self.ax.imshow(self.imdata, vmin=0, vmax=255, cmap='gray', origin='lower left')
+		self.image = self.ax.imshow(self.imdata, vmin=0, vmax=255, cmap='gray', origin='lower left')
 
-        # Create the matplotlib axis to display the histogram of intensities
-        self.hax = self.intensityFig.add_subplot(311)
-        self.hax.set_title('Horizontal Histogram')
-        self.hdata = self.get1DIntensity('h')[0]
-        self.hplot, = self.hax.plot(self.hdata)
+		# Create the matplotlib axis to display the histogram of intensities
+		self.hax = self.intensityFig.add_subplot(311)
+		self.hax.set_title('Horizontal Histogram')
+		self.hdata = self.get1DIntensity('h')[0]
+		self.hplot, = self.hax.plot(self.hdata)
+		self.hintplot, = self.hax.plot(np.sum(self.imdata, axis=1))
+		self.hintfit, = self.hax.plot(np.zeros(np.sum(self.imdata, axis=1).shape))
+		self.hax.set_ylim(0,255)
 
-        self.vax = self.intensityFig.add_subplot(312)
-        self.vax.set_title('Vertical Histogram')
-        self.vdata = self.get1DIntensity('v')[0]
-        self.vplot, = self.vax.plot(self.vdata)
+		
+		self.vax = self.intensityFig.add_subplot(312)
+		self.vax.set_title('Vertical Histogram')
+		self.vdata = self.get1DIntensity('v')[0]
+		self.vplot, = self.vax.plot(self.vdata)
+		self.vintplot, = self.vax.plot(np.sum(self.imdata, axis=0))
+		self.vintfit, = self.vax.plot(np.zeros(np.sum(self.imdata, axis=0).shape))
+		self.vax.set_ylim(0,255)
 
-        # Create axis to display waists
-        self.wax = self.intensityFig.add_subplot(313)
-        self.wax.set_title('Last 20 Waists')
+		# Create axis to display waists
+		self.wax = self.intensityFig.add_subplot(313)
+		self.wax.set_title('Last 20 Waists')
 
-        self.wxplot, = self.wax.plot(self.waistListX)
-        self.wyplot, = self.wax.plot(self.waistListY)
+		self.wxplot, = self.wax.plot(self.waistListX)
+		self.wyplot, = self.wax.plot(self.waistListY)
 
-        while self.run_stream:
-            self.imdata = self.cam.get_image()
-            self.hdata, self.hmax = self.get1DIntensity('h')
-            self.vdata, self.vmax = self.get1DIntensity('v')
-            self.image.set_data(self.imdata)
-            self.hplot.set_ydata(self.hdata)
-            self.vplot.set_ydata(self.vdata)
-
-            self.wxplot.set_ydata(self.waistListX)
-            self.wyplot.set_ydata(self.waistListY)
-
-
-            if self.continuous ==1:
-                self.calc_waists()
-
-            self.wax.relim()
-            self.wax.autoscale_view(True, True, True)
-
-            self.intensityFig.tight_layout()
-
-            self.canvas.draw()
-            self.intensityCanvas.draw()
-
-            self.canvas.flush_events()
-            self.intensityCanvas.flush_events()
-
-    def gaussian(self,x, a, x0, b, wx):
-        return a * np.exp(-2*((x - x0) / wx) ** 2)+ b
-
-    def calc_waists(self):
-        try:
-            xdata = np.sum(self.imdata, axis=0)  # x
-            ydata = np.sum(self.imdata, axis=1)  # x
-
-            p0x = (xdata.max(), 600, 0, 600)
-            p0y = (ydata.max(), 600, 0, 600)
-
-            px, covx = curve_fit(self.gaussian, np.arange(len(xdata)), xdata,
-                           p0=p0x)
-            py, covy = curve_fit(self.gaussian, np.arange(len(ydata)), ydata,
-                           p0=p0y)
-
-            wx = px[-1]
-            wy = py[-1]
+		while self.run_stream:
+			#self.imdata = self.cam.get_image()
+			self.hdata, self.hmax = self.get1DIntensity('h')
+			self.vdata, self.vmax = self.get1DIntensity('v')
+			self.image.set_data(self.imdata)
+			self.hplot.set_ydata(self.hdata, color = '0.7')
+			self.hintplot.set_ydata(np.sum(self.imdata, axis=1))
+			self.vplot.set_ydata(self.vdata, color = '0.7')
+			self.vintplot.set_ydata(np.sum(self.imdata, axis=0))
+			
+			self.wxplot.set_ydata(self.waistListX)
+			self.wyplot.set_ydata(self.waistListY)
 
 
-            pixel_size = 5.2e-3  # mm
+			if self.continuous ==1:
+				self.calc_waists()
 
-            self.waistListX = np.roll(self.waistListX, 1)
-            self.waistListY = np.roll(self.waistListY, 1)
-            self.waistListX[0] = wx * pixel_size
-            self.waistListY[0] = wy * pixel_size
+			self.wax.relim()
+			self.wax.autoscale_view(True, True, True)
 
-            message = 'wx = ' + str(wx * pixel_size) + ' | wy = ' + str(wy * pixel_size) + ' (mm)'
-            self.waistTextBox.setText(message)
-            print message
-        except Exception as e:
-            print e
-            None
+
+			self.canvas.draw()
+			self.intensityCanvas.draw()
+
+			self.canvas.flush_events()
+			self.intensityCanvas.flush_events()
+			self.intensityFig.tight_layout()
+
+	def gaussian(self,x, a, x0, b, wx):
+		return a * np.exp(-2*((x - x0) / wx) ** 2)+ b
+
+	def calc_waists(self):
+		try:
+			xdata = np.sum(self.imdata, axis=0)  # x
+			ydata = np.sum(self.imdata, axis=1)  # x
+			
+			xaxis = np.arange(len(xdata))
+			yaxis = np.arange(len(ydata))
+
+			p0x = (xdata.max(), 600, 0, 600)
+			p0y = (ydata.max(), 600, 0, 600)
+
+			px, covx = curve_fit(self.gaussian, xaxis, xdata,
+						   p0=p0x)
+			py, covy = curve_fit(self.gaussian, yaxis, ydata,
+						   p0=p0y)
+						 
+			hfit = self.gaussian(xaxis, *px)
+			vfit = self.gaussian(yaxis, *py)
+						 
+			hfit *= 255./hfit.max()
+			vfit *= 255./vfit.max()
+			
+			self.hintfit.set_ydata(hfit)
+			self.vintfit.set_ydata(vfit)
+
+			wx = px[-1]
+			wy = py[-1]
+
+
+			pixel_size = 5.2e-3  # mm
+
+			self.waistListX = np.roll(self.waistListX, 1)
+			self.waistListY = np.roll(self.waistListY, 1)
+			self.waistListX[0] = wx * pixel_size
+			self.waistListY[0] = wy * pixel_size
+
+			message = 'wx = ' + str(wx * pixel_size) + ' | wy = ' + str(wy * pixel_size) + ' (mm)'
+			self.waistTextBox.setText(message)
+			print(message)
+		except Exception as e:
+			print( e )
+			None
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main = main()
-    sys.exit(app.exec_())
+	app = QApplication(sys.argv)
+	main = main()
+	sys.exit(app.exec_())
