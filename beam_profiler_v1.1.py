@@ -18,19 +18,15 @@ import threading
 ''' 
 Author - Daniel J. Whiting 
 Date modified - 10/08/2017
-
 --- Installation ---
 Requires standard 64-bit python 2 distribution (e.g. anaconda) including PyQt5 library
 Install 64 bit thorcam package
 Change PATH variable to point to installation location of thorcam
-
 --- Usage ---
 Currently continuously reads and displays images from camera with adjustable exposure
 Clicking button to calculate waist will print result to terminal window
-
 --- Developer notes ---
 Functions return 0 if successful or -1 if failed, 125 means invalid parameter
-
 --- Changelog ---
 Defined new function 'Gaussian' to take place of lambda functions
 Corrected gaussian formula r->2r
@@ -248,9 +244,9 @@ class main(QWidget):
 		self.ax = self.fig.add_subplot(111)
 
 		from scipy import misc
-		#self.imdata = self.cam.get_image()
-		from scipy.misc import imread
-		self.imdata = imread('./gaussian.jpg')
+		self.imdata = self.cam.get_image()
+		#from scipy.misc import imread
+		#self.imdata = imread('./gaussian.jpg')
 
 		self.image = self.ax.imshow(self.imdata, vmin=0, vmax=255, cmap='gray', origin='lower left')
 
@@ -258,18 +254,18 @@ class main(QWidget):
 		self.hax = self.intensityFig.add_subplot(311)
 		self.hax.set_title('Horizontal Histogram')
 		self.hdata = self.get1DIntensity('h')[0]
-		self.hplot, = self.hax.plot(self.hdata)
-		self.hintplot, = self.hax.plot(np.sum(self.imdata, axis=1))
-		self.hintfit, = self.hax.plot(np.zeros(np.sum(self.imdata, axis=1).shape))
+		self.hplot, = self.hax.plot(self.hdata, color = '0.8')
+		self.hintplot, = self.hax.plot(np.zeros(np.sum(self.imdata, axis=1).shape), color = '0.5', linewidth = 3)
+		self.hintfit, = self.hax.plot(np.zeros(np.sum(self.imdata, axis=1).shape), color = 'g')
 		self.hax.set_ylim(0,255)
 
 		
 		self.vax = self.intensityFig.add_subplot(312)
 		self.vax.set_title('Vertical Histogram')
 		self.vdata = self.get1DIntensity('v')[0]
-		self.vplot, = self.vax.plot(self.vdata)
-		self.vintplot, = self.vax.plot(np.sum(self.imdata, axis=0))
-		self.vintfit, = self.vax.plot(np.zeros(np.sum(self.imdata, axis=0).shape))
+		self.vplot, = self.vax.plot(self.vdata, color = '0.8')
+		self.vintplot, = self.vax.plot(np.sum(self.imdata, axis=0), color = '0.5', linewidth = 3)
+		self.vintfit, = self.vax.plot(np.zeros(np.sum(self.imdata, axis=0).shape), color = 'g')
 		self.vax.set_ylim(0,255)
 
 		# Create axis to display waists
@@ -280,14 +276,22 @@ class main(QWidget):
 		self.wyplot, = self.wax.plot(self.waistListY)
 
 		while self.run_stream:
-			#self.imdata = self.cam.get_image()
+			self.imdata = self.cam.get_image()
 			self.hdata, self.hmax = self.get1DIntensity('h')
 			self.vdata, self.vmax = self.get1DIntensity('v')
 			self.image.set_data(self.imdata)
-			self.hplot.set_ydata(self.hdata, color = '0.7')
-			self.hintplot.set_ydata(np.sum(self.imdata, axis=1))
-			self.vplot.set_ydata(self.vdata, color = '0.7')
-			self.vintplot.set_ydata(np.sum(self.imdata, axis=0))
+			
+			self.hplot.set_ydata(self.hdata)
+			self.vplot.set_ydata(self.vdata)
+			
+			vint = np.sum(self.imdata, axis=0).astype(np.float64)
+			hint = np.sum(self.imdata, axis=1).astype(np.float64)
+			
+			vint *= 255/vint.max()
+			hint *= 255/hint.max()
+			
+			self.hintplot.set_ydata(hint)
+			self.vintplot.set_ydata(vint)
 			
 			self.wxplot.set_ydata(self.waistListX)
 			self.wyplot.set_ydata(self.waistListY)
@@ -308,12 +312,13 @@ class main(QWidget):
 			self.intensityFig.tight_layout()
 
 	def gaussian(self,x, a, x0, b, wx):
+		a = np.abs(a)
 		return a * np.exp(-2*((x - x0) / wx) ** 2)+ b
 
 	def calc_waists(self):
 		try:
-			xdata = np.sum(self.imdata, axis=0)  # x
-			ydata = np.sum(self.imdata, axis=1)  # x
+			xdata = np.sum(self.imdata, axis=1)  # x
+			ydata = np.sum(self.imdata, axis=0)  # x
 			
 			xaxis = np.arange(len(xdata))
 			yaxis = np.arange(len(ydata))
@@ -335,8 +340,8 @@ class main(QWidget):
 			self.hintfit.set_ydata(hfit)
 			self.vintfit.set_ydata(vfit)
 
-			wx = px[-1]
-			wy = py[-1]
+			wx = np.abs(px[-1])
+			wy = np.abs(py[-1])
 
 
 			pixel_size = 5.2e-3  # mm
@@ -357,4 +362,4 @@ class main(QWidget):
 if __name__ == '__main__':
 	app = QApplication(sys.argv)
 	main = main()
-	sys.exit(app.exec_())
+sys.exit(app.exec_())
